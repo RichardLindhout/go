@@ -2,12 +2,14 @@ package jsoniter
 
 import (
 	"fmt"
-	"github.com/modern-go/reflect2"
 	"reflect"
 	"sort"
 	"strings"
 	"unicode"
 	"unsafe"
+
+	"github.com/iancoleman/strcase"
+	"github.com/modern-go/reflect2"
 )
 
 var typeDecoders = map[string]ValDecoder{}
@@ -445,7 +447,7 @@ func processTags(structDescriptor *StructDescriptor, cfg *frozenConfig) {
 		shouldOmitEmpty := false
 		tagParts := strings.Split(binding.Field.Tag().Get(cfg.getTagKey()), ",")
 		for _, tagPart := range tagParts[1:] {
-			if tagPart == "omitempty" {
+			if tagPart == "omitifempty" {
 				shouldOmitEmpty = true
 			} else if tagPart == "string" {
 				if binding.Field.Type().Kind() == reflect.String {
@@ -469,11 +471,13 @@ func calcFieldNames(originalFieldName string, tagProvidedFieldName string, whole
 	}
 	// rename?
 	var fieldNames []string
+
 	if tagProvidedFieldName == "" {
-		fieldNames = []string{originalFieldName}
+		fieldNames = []string{strcase.ToLowerCamel(originalFieldName)}
 	} else {
-		fieldNames = []string{tagProvidedFieldName}
+		fieldNames = []string{strcase.ToLowerCamel(tagProvidedFieldName)}
 	}
+
 	// private?
 	isNotExported := unicode.IsLower(rune(originalFieldName[0]))
 	if isNotExported {
